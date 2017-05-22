@@ -14,7 +14,7 @@ Overview
 ===
 
 Recent releases of OSX include a feature called "[System Integrity
-Proection](https://support.apple.com/en-us/HT204899)" or "SIP".
+Protection](https://support.apple.com/en-us/HT204899)" or "SIP".
 
 See [DMTN-001: Porting the stack to OS X El Capitan](http://dmtn-001.lsst.io/en/master/)
 
