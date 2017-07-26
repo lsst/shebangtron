@@ -35,6 +35,8 @@ def is_elf(path):
     with open(path, 'rb') as fi:
         head = fi.read(4)
     return bool(head == ELF_MAGIC)
+
+
 # /elf.py
 
 # lifted from conda-build/conda_build/os_utils/macho.py
@@ -58,6 +60,8 @@ def is_macho(path):
     with open(path, 'rb') as fi:
         head = fi.read(4)
     return bool(head in MACHO_MAGIC)
+
+
 # /macho.py
 
 # lifted from conda-build/conda_build/post.py
@@ -125,6 +129,7 @@ def fix_shebang(path, build_python):
         fo.write(new_data.decode(encoding))
     # restore file mode
     os.chmod(path, mode)
+
 
 # /post.py
 
