@@ -133,15 +133,19 @@ def fix_shebang(path, build_python):
 
 # /post.py
 
-# py >= 3.3 has shutil.which
-eups = find_executable('eups')
-if not eups:
-    raise RuntimeError('unable to find eups command')
+try:
+    flavor = os.environ['SHTRON_EUPS_FLAVOR']
+except KeyError:
+    # py >= 3.3 has shutil.which
+    eups = find_executable('eups')
+    if not eups:
+        raise RuntimeError('unable to find eups command')
 
-flavor = check_output([eups, "flavor"])
-if not flavor:
-    raise RuntimeError('eups flavor sub-command may be broken')
-flavor = flavor.decode('utf-8')
+    flavor = check_output([eups, "flavor"])
+    if not flavor:
+        raise RuntimeError('eups flavor sub-command may be broken')
+
+    flavor = flavor.decode('utf-8')
 
 # remove newline from eups output
 flavor = flavor.rstrip()
