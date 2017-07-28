@@ -161,7 +161,10 @@ if not os.path.isdir(prod_install_path):
     raise RuntimeError('EUPS product install path is missing')
 
 # fully qualified path to new shebang interp
-py = sys.executable
+try:
+    py = os.environ['SHTRON_PYTHON']
+except KeyError:
+    py = sys.executable
 
 for root, dirs, files in os.walk(prod_install_path):
     for f in files:
