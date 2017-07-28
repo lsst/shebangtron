@@ -105,8 +105,14 @@ def fix_shebang(path, build_python):
         except OSError:
             mm = fi
         m = SHEBANG_PAT.match(mm)
+        if not m:
+            return
 
-        if not (m and b'python' in m.group()):
+        # skip scripts that use #!/usr/bin/env
+        if b'/usr/bin/env' in m.group():
+            return
+
+        if not b'python' in m.group():
             return
 
         data = mm[:]
