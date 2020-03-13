@@ -62,6 +62,8 @@ def fix_shebang(path, build_python):
         if not b'python' in m.group():
             return
 
+        fi.seek(0)
+        mm = mmap.mmap(fi.fileno(), 0, prot=mmap.PROT_READ)
         data = mm[:]
 
     # encoding = sys.stdout.encoding or 'utf8'
