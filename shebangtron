@@ -7,114 +7,63 @@ invoke it as a manual post-install step on OSX systems with SIP installed.
 
 from __future__ import absolute_import, print_function
 
-import sys
-import re
-import os.path
 import io
 import locale
 import mmap
+import os.path
+import re
+import stat
+import sys
 from subprocess import check_output
 from distutils.spawn import find_executable
 
-# lifted from conda-build/conda_build/os_utils/elf.py
-from os.path import islink, isfile
-
-# extensions which are assumed to belong to non-ELF files
-ELF_NO_EXT = (
-    '.py', '.pyc', '.pyo', '.h', '.a', '.c', '.txt', '.html',
-    '.xml', '.png', '.jpg', '.gif',
-    '.o'  # ELF but not what we are looking for
-)
-
-ELF_MAGIC = b'\x7fELF'
-
-
-def is_elf(path):
-    if path.endswith(ELF_NO_EXT) or islink(path) or not isfile(path):
-        return False
-    with open(path, 'rb') as fi:
-        head = fi.read(4)
-    return bool(head == ELF_MAGIC)
-
-
-# /elf.py
-
-# lifted from conda-build/conda_build/os_utils/macho.py
-MACHO_NO_EXT = (
-    '.py', '.pyc', '.pyo', '.h', '.a', '.c', '.txt', '.html',
+NON_SCRIPT_EXT = (
+    '.pyc', '.pyo', '.h', '.a', '.c', '.cc', '.txt', '.html',
     '.xml', '.png', '.jpg', '.gif', '.class',
+    '.o', '.dylib', '.so', '.os', '.version', '.m4', '.table',
+    '.pdf', '.tex', '.dox', '.tag', '.conf', '.cfg', '.fits', '.fz',
+    '.js', '.yaml', '.md', '.css', '.rst',
 )
 
-MACHO_MAGIC = {
-    b'\xca\xfe\xba\xbe': 'MachO-universal',
-    b'\xce\xfa\xed\xfe': 'MachO-i386',
-    b'\xcf\xfa\xed\xfe': 'MachO-x86_64',
-    b'\xfe\xed\xfa\xce': 'MachO-ppc',
-    b'\xfe\xed\xfa\xcf': 'MachO-ppc64',
-}
-
-
-def is_macho(path):
-    if path.endswith(MACHO_NO_EXT) or islink(path) or not isfile(path):
-        return False
-    with open(path, 'rb') as fi:
-        head = fi.read(4)
-    return bool(head in MACHO_MAGIC)
-
-
-# /macho.py
-
-# lifted from conda-build/conda_build/post.py
 SHEBANG_PAT = re.compile(br'^#!.+$', re.M)
 
-
-def is_obj(path):
-    assert sys.platform != 'win32'
-    return bool((sys.platform.startswith('linux') and is_elf(path)) or
-                (sys.platform == 'darwin' and is_macho(path)))
-
-
 def fix_shebang(path, build_python):
-    # the mmap-fu will fail if a file is not opened for writing -- we can't fix
-    # unwritable files so they should be completely skipped.
+    if path.endswith(NON_SCRIPT_EXT):
+        return
+
+    st = os.stat(path, follow_symlinks=False)
+    if stat.S_ISLNK(st.st_mode):
+        return
+    if not stat.S_ISREG(st.st_mode):
+        return
+    if st.st_size == 0:
+        return
+    # must be executable
+    if st.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) == 0:
+        return
+
+    # we can't fix unwritable files so they should be completely skipped.
     if not os.access(path, os.R_OK | os.W_OK):
         return
 
-    if is_obj(path):
-        return
-    elif os.path.islink(path):
-        return
-    elif not os.path.isfile(path):
-        return
+    with io.open(path, mode='rb') as fi:
+        data = fi.read(1000)
 
-    if os.stat(path).st_size == 0:
-        return
-
-    prefenc = locale.getpreferredencoding()
-    with io.open(path, encoding=prefenc, mode='r+') as fi:
-        try:
-            data = fi.read(100)
-            fi.seek(0)
-        except UnicodeDecodeError:  # file is binary
+        if not data.startswith(b'#!'):
             return
 
-        # regexp on the memory mapped file so we only read it into
-        # memory if the regexp matches.
-        try:
-            mm = mmap.mmap(fi.fileno(), 0)
-        except OSError:
-            mm = fi
-        m = SHEBANG_PAT.match(mm)
+        m = SHEBANG_PAT.match(data)
         if not m:
             return
 
         # skip scripts that use #!/usr/bin/env
         if b'/usr/bin/env' in m.group():
             return
-
         if not b'python' in m.group():
             return
 
+        fi.seek(0)
+        mm = mmap.mmap(fi.fileno(), 0, prot=mmap.PROT_READ)
         data = mm[:]
 
     # encoding = sys.stdout.encoding or 'utf8'
