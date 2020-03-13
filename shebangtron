@@ -7,12 +7,13 @@ invoke it as a manual post-install step on OSX systems with SIP installed.
 
 from __future__ import absolute_import, print_function
 
-import sys
-import re
-import os.path
 import io
 import locale
 import mmap
+import os.path
+import re
+import stat
+import sys
 from subprocess import check_output
 from distutils.spawn import find_executable
 
