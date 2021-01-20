@@ -8,7 +8,6 @@ invoke it as a manual post-install step on OSX systems with SIP installed.
 from __future__ import absolute_import, print_function
 
 import io
-import locale
 import mmap
 import os.path
 import re
@@ -26,6 +25,7 @@ NON_SCRIPT_EXT = (
 )
 
 SHEBANG_PAT = re.compile(br'^#!.+$', re.M)
+
 
 def fix_shebang(path, build_python):
     if path.endswith(NON_SCRIPT_EXT):
@@ -59,14 +59,13 @@ def fix_shebang(path, build_python):
         # skip scripts that use #!/usr/bin/env
         if b'/usr/bin/env' in m.group():
             return
-        if not b'python' in m.group():
+        if b'python' not in m.group():
             return
 
         fi.seek(0)
         mm = mmap.mmap(fi.fileno(), 0, prot=mmap.PROT_READ)
         data = mm[:]
 
-    # encoding = sys.stdout.encoding or 'utf8'
     encoding = 'utf8'
 
     # remove the conda prefix logic and set the path to the python interp
@@ -79,7 +78,6 @@ def fix_shebang(path, build_python):
 
     # save original file mode
     mode = os.stat(path).st_mode
-    # with io.open(path, 'w', encoding=locale.getpreferredencoding()) as fo:
     with io.open(path, 'w', encoding=encoding) as fo:
         fo.write(new_data.decode(encoding))
     # restore file mode
