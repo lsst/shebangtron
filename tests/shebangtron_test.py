@@ -1,5 +1,5 @@
-import sys
 from subprocess import check_output
+
 
 def test_not_py_shebang(tmpdir, monkeypatch):
     flavor = "deadbeef"
@@ -17,6 +17,7 @@ def test_not_py_shebang(tmpdir, monkeypatch):
 
     assert test_file.read() == "#!/bin/sh"
 
+
 def test_vanilla_py_shebang(tmpdir, monkeypatch):
     flavor = "deadbeef"
     python = "snake"
@@ -32,6 +33,7 @@ def test_vanilla_py_shebang(tmpdir, monkeypatch):
     print(check_output(["./shebangtron"]))
 
     assert test_file.read() == "#!" + python
+
 
 def test_env_shebang(tmpdir, monkeypatch):
     flavor = "deadbeef"
