@@ -113,7 +113,8 @@ except KeyError:
 prod_install_path = os.path.join(eups_path, flavor)
 # sanity check
 if not os.path.isdir(prod_install_path):
-    raise RuntimeError('EUPS product install path is missing')
+    raise RuntimeError(f'EUPS product install path "{prod_install_path}"'
+                       'is missing')
 
 # fully qualified path to new shebang interp
 try:
