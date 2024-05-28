@@ -13,8 +13,9 @@ import os.path
 import re
 import stat
 import sys
+import shutil
 from subprocess import check_output
-from distutils.spawn import find_executable
+
 
 NON_SCRIPT_EXT = (
     '.pyc', '.pyo', '.h', '.a', '.c', '.cc', '.txt', '.html',
@@ -89,8 +90,7 @@ def fix_shebang(path, build_python):
 try:
     flavor = os.environ['SHTRON_EUPS_FLAVOR']
 except KeyError:
-    # py >= 3.3 has shutil.which
-    eups = find_executable('eups')
+    eups = shutil.which('eups')
     if not eups:
         raise RuntimeError('unable to find eups command')
 
